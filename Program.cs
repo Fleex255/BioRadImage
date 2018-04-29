@@ -8,19 +8,33 @@ namespace BioRadImage {
         static bool noWait = false;
         static void Main(string[] args) {
             if (args.Length == 0) {
-                Console.WriteLine("Usage: BIORADIMAGE InFile [OutFile] [/FORCE] [/NOWAIT]");
+                Console.WriteLine("Usage: BIORADIMAGE InFile [/OUT OutFile] [/FORCE] [/NOWAIT]");
                 Console.WriteLine("       InFile:  Path to Bio-Rad raw image file");
-                Console.WriteLine("       OutFile: Path to new BMP file (optional)");
+                Console.WriteLine("       /out:    Explicitly specify the output file");
+                Console.WriteLine("       OutFile: Path to new BMP file (only if /out specified)");
                 Console.WriteLine("       /force:  Don't check for signature before attempting conversion");
                 Console.WriteLine("       /nowait: Don't wait for a key press before exiting");
                 Exit(1);
             }
             bool force = false;
+            string newFile = null;
             for (int i = 1; i < args.Length; i++) {
                 if (args[i].Equals("/force", StringComparison.InvariantCultureIgnoreCase)) {
                     force = true;
                 } else if (args[i].Equals("/nowait", StringComparison.InvariantCultureIgnoreCase)) {
                     noWait = true;
+                } else if (args[i].Equals("/out", StringComparison.InvariantCultureIgnoreCase)) {
+                    if (i + 1 < args.Length) {
+                        newFile = args[i + 1];
+                        i++;
+                    } else {
+                        Console.WriteLine("The output filename must be specified after the /out switch");
+                        Exit(1);
+                    }
+                } else {
+                    Console.WriteLine("Unknown switch: " + args[i]);
+                    Console.WriteLine("If dragging images onto this program, drag only one at a time");
+                    Exit(1);
                 }
             }
             if (!File.Exists(args[0])) {
@@ -54,12 +68,8 @@ namespace BioRadImage {
                     }
                 }
             }
-            string newFile;
-            if (args.Length > 1 && !args[1].StartsWith("/")) {
-                newFile = args[1];
-            } else {
-                string fileTitle = Path.GetFileNameWithoutExtension(args[0]);
-                newFile = Path.Combine(Path.GetDirectoryName(args[0]), fileTitle + ".bmp");
+            if (newFile == null) {
+                newFile = args[0] + ".bmp";
             }
             bitmap.Save(newFile);
             Console.WriteLine("Output saved as " + newFile);
